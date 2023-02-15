@@ -1,11 +1,36 @@
 -- 1. 
 --     a. Which prescriber had the highest total number of claims (totaled over all drugs)? Report the npi and the total number of claims.
-SELECT *
-FROM prescriber
-INNER JOIN
-
+SELECT prescriber.npi, SUM(prescription.total_claim_count) AS total_claims
+FROM prescriber 
+INNER JOIN prescription
+ON prescriber.npi=prescription.npi
+INNER JOIN drug
+ON prescription.drug_name=drug.drug_name
+GROUP BY prescriber.npi
+ORDER BY total_claims DESC
+LIMIT 25;
+--Answer 1881634483	110646
 
 --     b. Repeat the above, but this time report the nppes_provider_first_name, nppes_provider_last_org_name,  specialty_description, and the total number of claims.
+SELECT 
+	prescriber.npi, 
+	prescriber.nppes_provider_first_name, 
+	prescriber.nppes_provider_last_org_name,
+	prescriber.specialty_description,
+	SUM(prescription.total_claim_count) AS total_claims
+FROM prescriber 
+LEFT JOIN prescription
+ON prescriber.npi=prescription.npi
+INNER JOIN drug
+ON prescription.drug_name=drug.drug_name
+GROUP BY prescriber.npi, 
+	prescriber.nppes_provider_first_name, 
+	prescriber.nppes_provider_last_org_name,
+	prescriber.specialty_description
+ORDER BY total_claims DESC
+LIMIT 25;
+
+--ANSWER (RUN TO SEE TABLE) #1 IS 1881634483	"BRUCE"	"PENDLEY"	"Family Practice"	110646
 
 -- 2. 
 --     a. Which specialty had the most total number of claims (totaled over all drugs)?
