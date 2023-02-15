@@ -19,7 +19,7 @@ SELECT
 	prescriber.specialty_description,
 	SUM(prescription.total_claim_count) AS total_claims
 FROM prescriber 
-LEFT JOIN prescription
+INNER JOIN prescription --I tried using all the JOIN commands and only found different results when I used outerjoin on both
 ON prescriber.npi=prescription.npi
 INNER JOIN drug
 ON prescription.drug_name=drug.drug_name
@@ -29,14 +29,40 @@ GROUP BY prescriber.npi,
 	prescriber.specialty_description
 ORDER BY total_claims DESC
 LIMIT 25;
-
 --ANSWER (RUN TO SEE TABLE) #1 IS 1881634483	"BRUCE"	"PENDLEY"	"Family Practice"	110646
 
 -- 2. 
 --     a. Which specialty had the most total number of claims (totaled over all drugs)?
+SELECT 
+	prescriber.specialty_description,
+	SUM(prescription.total_claim_count) AS total_claims
+FROM prescriber 
+INNER JOIN prescription 
+ON prescriber.npi=prescription.npi
+INNER JOIN drug
+ON prescription.drug_name=drug.drug_name
+GROUP BY prescriber.specialty_description
+ORDER BY total_claims DESC
+LIMIT 25;
+--ANSWER FAMILY PRACTICE
 
 --     b. Which specialty had the most total number of claims for opioids?
-
+SELECT 
+	prescriber.specialty_description,
+	drug.opioid_drug_flag,
+	drug.long_acting_opioid_drug_flag,
+	SUM(prescription.total_claim_count) AS total_claims
+FROM prescriber 
+INNER JOIN prescription 
+ON prescriber.npi=prescription.npi
+INNER JOIN drug
+ON prescription.drug_name=drug.drug_name
+WHERE opioid_drug_flag='Y' OR
+	drug.long_acting_opioid_drug_flag='Y'
+GROUP BY prescriber.specialty_description, drug.opioid_drug_flag, drug.long_acting_opioid_drug_flag
+ORDER BY total_claims DESC
+LIMIT 25;
+--ANSWER NURSE PRACTICIONER
 --     c. **Challenge Question:** Are there any specialties that appear in the prescriber table that have no associated prescriptions in the prescription table?
 
 --     d. **Difficult Bonus:** *Do not attempt until you have solved all other problems!* For each specialty, report the percentage of total claims by that specialty which are for opioids. Which specialties have a high percentage of opioids?
