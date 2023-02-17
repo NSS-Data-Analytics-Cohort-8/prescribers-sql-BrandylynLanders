@@ -123,13 +123,16 @@ GROUP BY drug.drug_name, drug_type
 ORDER BY drug_type, total_cost DESC;
 -- 5. 
 --     a. How many CBSAs are in Tennessee? **Warning:** The cbsa table contains information for all states, not just Tennessee.
-SELECT *
+SELECT COUNT(DISTINCT prescriber.npi)AS provider_number
 FROM prescriber 
-INNER JOIN prescription 
-ON prescriber.npi=prescription.npi
-INNER JOIN drug
-ON prescription.drug_name=drug.drug_name
-LIMIT 25;
+INNER JOIN zip_fips 
+ON prescriber.nppes_provider_zip5=zip_fips.zip
+INNER JOIN cbsa
+ON zip_fips.fipscounty=cbsa.fipscounty
+WHERE prescriber.nppes_provider_state='TN';
+--ANSWER 22236
+
+
 --     b. Which cbsa has the largest combined population? Which has the smallest? Report the CBSA name and total population.
 SELECT *
 FROM prescriber 
