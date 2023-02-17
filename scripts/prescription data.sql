@@ -69,7 +69,7 @@ LIMIT 25;
 
 -- 3. 
 --     a. Which drug (generic_name) had the highest total drug cost?
-SELECT SUM(total_drug_cost)AS total_cost, drug.generic_name
+SELECT SUM(prescription.total_drug_cost)AS total_cost, drug.generic_name
 FROM prescriber 
 INNER JOIN prescription 
 ON prescriber.npi=prescription.npi
@@ -80,14 +80,15 @@ ORDER BY total_cost DESC
 LIMIT 25;
 
 --     b. Which drug (generic_name) has the hightest total cost per day? **Bonus: Round your cost per day column to 2 decimal places. Google ROUND to see how this works.**
-SELECT *
+SELECT drug.generic_name, 
+	ROUND(SUM(prescription.total_drug_cost/prescription.total_day_supply),2)AS cost_per_day
 FROM prescriber 
 INNER JOIN prescription 
 ON prescriber.npi=prescription.npi
 INNER JOIN drug
 ON prescription.drug_name=drug.drug_name
-GROUP BY prescriber.specialty_description
-ORDER BY total_claims DESC
+GROUP BY drug.generic_name
+ORDER BY cost_per_day DESC
 LIMIT 25;
 -- 4. 
 --     a. For each drug in the drug table, return the drug name and then a column named 'drug_type' which says 'opioid' for drugs which have opioid_drug_flag = 'Y', says 'antibiotic' for those drugs which have antibiotic_drug_flag = 'Y', and says 'neither' for all other drugs.
@@ -97,14 +98,18 @@ INNER JOIN prescription
 ON prescriber.npi=prescription.npi
 INNER JOIN drug
 ON prescription.drug_name=drug.drug_name
-GROUP BY prescriber.specialty_description
-ORDER BY total_claims DESC
 LIMIT 25;
 --     b. Building off of the query you wrote for part a, determine whether more was spent (total_drug_cost) on opioids or on antibiotics. Hint: Format the total costs as MONEY for easier comparision.
 
 -- 5. 
 --     a. How many CBSAs are in Tennessee? **Warning:** The cbsa table contains information for all states, not just Tennessee.
-
+SELECT *
+FROM prescriber 
+INNER JOIN prescription 
+ON prescriber.npi=prescription.npi
+INNER JOIN drug
+ON prescription.drug_name=drug.drug_name
+LIMIT 25;
 --     b. Which cbsa has the largest combined population? Which has the smallest? Report the CBSA name and total population.
 
 --     c. What is the largest (in terms of population) county which is not included in a CBSA? Report the county name and population.
