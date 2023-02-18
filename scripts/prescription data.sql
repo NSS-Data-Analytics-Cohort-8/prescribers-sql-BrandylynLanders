@@ -132,17 +132,72 @@ ON zip_fips.fipscounty=cbsa.fipscounty
 WHERE prescriber.nppes_provider_state='TN';
 --ANSWER 22236
 
+SELECT COUNT(DISTINCT prescriber.npi) AS provider_number,
+       cbsa.fipscounty,
+       cbsa.cbsaname
+FROM prescriber 
+INNER JOIN zip_fips 
+ON prescriber.nppes_provider_zip5 = zip_fips.zip
+INNER JOIN cbsa
+ON zip_fips.fipscounty = cbsa.fipscounty
+WHERE prescriber.nppes_provider_state = 'TN'
+GROUP BY cbsa.fipscounty, cbsa.cbsaname;
+--I changed it up some so that I could look at the results. 
 
 --     b. Which cbsa has the largest combined population? Which has the smallest? Report the CBSA name and total population.
-SELECT *
+SELECT cbsa.cbsaname, SUM(population.population) AS total_population
 FROM prescriber 
-INNER JOIN prescription 
-ON prescriber.npi=prescription.npi
-INNER JOIN drug
-ON prescription.drug_name=drug.drug_name
-LIMIT 25;
---     c. What is the largest (in terms of population) county which is not included in a CBSA? Report the county name and population.
+INNER JOIN zip_fips 
+ON prescriber.nppes_provider_zip5 = zip_fips.zip
+INNER JOIN cbsa
+ON zip_fips.fipscounty = cbsa.fipscounty
+INNER JOIN fips_county
+ON cbsa.fipscounty=fips_county.fipscounty
+INNER JOIN population
+ON fips_county.fipscounty = population.fipscounty
+GROUP BY cbsa.cbsaname
+ORDER BY total_population DESC
+LIMIT 1;--ANSWER Nashville-Davidson-Murfreesboro--Franklin, TN
 
+SELECT cbsa.cbsaname, SUM(population.population) AS total_population
+FROM prescriber 
+INNER JOIN zip_fips 
+ON prescriber.nppes_provider_zip5 = zip_fips.zip
+INNER JOIN cbsa
+ON zip_fips.fipscounty = cbsa.fipscounty
+INNER JOIN fips_county
+ON cbsa.fipscounty=fips_county.fipscounty
+INNER JOIN population
+ON fips_county.fipscounty = population.fipscounty
+GROUP BY cbsa.cbsaname
+ORDER BY total_population ASC
+LIMIT 1;
+--Answer Morristown TN
+
+--     c. What is the largest (in terms of population) county which is not included in a CBSA? Report the county name and population.
+SELECT cbsa.cbsaname, SUM(population.population) AS total_population
+FROM prescriber 
+INNER JOIN zip_fips 
+ON prescriber.nppes_provider_zip5 = zip_fips.zip
+INNER JOIN cbsa
+ON zip_fips.fipscounty = cbsa.fipscounty
+INNER JOIN fips_county
+ON cbsa.fipscounty=fips_county.fipscounty
+INNER JOIN population
+ON fips_county.fipscounty = population.fipscounty
+WHERE fipscounty NOT IN 
+(SELECT fipscounty
+FROM cbsa
+GROUP BY cbsa.cbsaname
+ORDER BY total_population DESC
+LIMIT 1;
+UNION
+SELECT population.county, population.population
+FROM population
+
+INNER JOIN fips_county ON cbsa.fipscounty = fips_county.fipscounty)
+ORDER BY population DESC
+LIMIT 1;
 -- 6. 
 --     a. Find all rows in the prescription table where total_claims is at least 3000. Report the drug_name and the total_claim_count.
 
