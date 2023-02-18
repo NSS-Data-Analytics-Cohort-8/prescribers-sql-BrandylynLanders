@@ -123,26 +123,15 @@ GROUP BY drug.drug_name, drug_type
 ORDER BY drug_type, total_cost DESC;
 -- 5. 
 --     a. How many CBSAs are in Tennessee? **Warning:** The cbsa table contains information for all states, not just Tennessee.
-SELECT COUNT(DISTINCT prescriber.npi)AS provider_number
+SELECT COUNT(DISTINCT cbsa.cbsa) AS cbsa_count
 FROM prescriber 
 INNER JOIN zip_fips 
 ON prescriber.nppes_provider_zip5=zip_fips.zip
 INNER JOIN cbsa
 ON zip_fips.fipscounty=cbsa.fipscounty
 WHERE prescriber.nppes_provider_state='TN';
---ANSWER 22236
+--ANSWER 24
 
-SELECT COUNT(DISTINCT prescriber.npi) AS provider_number,
-       cbsa.fipscounty,
-       cbsa.cbsaname
-FROM prescriber 
-INNER JOIN zip_fips 
-ON prescriber.nppes_provider_zip5 = zip_fips.zip
-INNER JOIN cbsa
-ON zip_fips.fipscounty = cbsa.fipscounty
-WHERE prescriber.nppes_provider_state = 'TN'
-GROUP BY cbsa.fipscounty, cbsa.cbsaname;
---I changed it up some so that I could look at the results. 
 
 --     b. Which cbsa has the largest combined population? Which has the smallest? Report the CBSA name and total population.
 SELECT cbsa.cbsaname, SUM(population.population) AS total_population
@@ -175,34 +164,34 @@ LIMIT 1;
 --Answer Morristown TN
 
 --     c. What is the largest (in terms of population) county which is not included in a CBSA? Report the county name and population.
-SELECT cbsa.cbsaname, SUM(population.population) AS total_population
-FROM prescriber 
-INNER JOIN zip_fips 
-ON prescriber.nppes_provider_zip5 = zip_fips.zip
-INNER JOIN cbsa
-ON zip_fips.fipscounty = cbsa.fipscounty
-INNER JOIN fips_county
-ON cbsa.fipscounty=fips_county.fipscounty
-INNER JOIN population
-ON fips_county.fipscounty = population.fipscounty
-WHERE fipscounty NOT IN 
-(SELECT fipscounty
+SELECT SUM(population.population)AS total_population, fips_county.county, fips_county.state, cbsa.cbsa
 FROM cbsa
-GROUP BY cbsa.cbsaname
-ORDER BY total_population DESC
-LIMIT 1;
-UNION
-SELECT population.county, population.population
-FROM population
+FULL JOIN fips_county
+ON cbsa.fipscounty = fips_county.fipscounty
+FULL JOIN population
+ON fips_county.fipscounty = population.fipscounty
+WHERE cbsa.cbsa IS NULL
+AND fips_county.state='TN'
+AND population.population IS NOT NULL
+GROUP BY cbsa.cbsa,fips_county.county, fips_county.state 
+ORDER BY total_population DESC;
+--Answer sevier tn
 
-INNER JOIN fips_county ON cbsa.fipscounty = fips_county.fipscounty)
-ORDER BY population DESC
-LIMIT 1;
 -- 6. 
 --     a. Find all rows in the prescription table where total_claims is at least 3000. Report the drug_name and the total_claim_count.
+SELECT drug_name, total_claim_count
+FROM prescription
+WHERE total_claim_count>3000
+ORDER BY total_claim_count DESC
+--Answer Run Table
 
 --     b. For each instance that you found in part a, add a column that indicates whether the drug is an opioid.
-
+SELECT prescription.drug_name, prescription.total_claim_count
+FROM prescription
+LEFT JOIN drug
+ON prescription.drug_name=drug.drug_name
+WHERE total_claim_count>3000
+ORDER BY total_claim_count DESC
 --     c. Add another column to you answer from the previous part which gives the prescriber first and last name associated with each row.
 
 -- 7. The goal of this exercise is to generate a full list of all pain management specialists in Nashville and the number of claims they had for each opioid. **Hint:** The results from all 3 parts will have 637 rows.
